@@ -12,7 +12,6 @@ export default tseslint.config(
       'dist/**',
       'coverage/**',
       'node_modules/**',
-      'public/mockServiceWorker.js',
       'playwright-report/**',
       'test-results/**',
     ],
@@ -49,7 +48,10 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.test.{ts,tsx}', 'tests/**', 'e2e/**'],
+    files: ['src/**/*.test.{ts,tsx}', 'tests/**'],
+    languageOptions: {
+      parserOptions: { projectService: false, project: './tsconfig.test.json' },
+    },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/unbound-method': 'off',

@@ -2,6 +2,7 @@ import { Outlet, ScrollRestoration, useMatches } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/shared/hooks/use-document-title';
 import { APP_ROUTES } from '../routing/routes';
+import { NavigationProgress } from '../routing/navigation-progress';
 export function RootLayout() {
   const { t } = useTranslation();
   const matches = useMatches();
@@ -10,6 +11,7 @@ export function RootLayout() {
   useDocumentTitle(title);
   return (
     <>
+      <NavigationProgress />
       <Outlet />
       <ScrollRestoration />
     </>

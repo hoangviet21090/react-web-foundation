@@ -31,12 +31,40 @@ export function createHttpClient({ baseURL, timeoutMs, onUnauthorized, auth }: H
   if (auth) {
     client.interceptors.request.use((config: SessionRequest) => {
       // This instance is scoped to the configured BFF; do not forward bearer tokens elsewhere.
+      const rejectEndpoint = () => {
+        throw new AppError('contract', 'Authenticated requests must use BFF-relative endpoints.');
+      };
+      const endpoint = config.url ?? '';
       if (
         config.baseURL !== baseURL ||
-        !/^\/(?!\/)/.test(config.url ?? '') ||
-        [...(config.url ?? '')].some((char) => char === '\\' || char.charCodeAt(0) <= 32)
-      ) {
-        throw new AppError('contract', 'Authenticated requests must use BFF-relative endpoints.');
+        !/^\/(?!\/)/.test(endpoint) ||
+        [...endpoint].some(
+          (char) => char === '\\' || char.charCodeAt(0) <= 32 || char.charCodeAt(0) === 127,
+        )
+      )
+        rejectEndpoint();
+      try {
+        // URL parsers normalize literal/encoded dots; never let a relative path escape the BFF.
+        const endpointPath = endpoint.split(/[?#]/, 1)[0] ?? '';
+        const decodedPath = decodeURIComponent(endpointPath);
+        if (decodedPath.split(/[/\\]/).some((segment) => segment === '.' || segment === '..'))
+          rejectEndpoint();
+        const base = new URL(baseURL, window.location.origin);
+        const resolved = new URL(client.getUri(config), window.location.origin);
+        const prefix = base.pathname.replace(/\/+$/, '') || '/';
+        if (
+          base.username ||
+          base.password ||
+          base.search ||
+          base.hash ||
+          resolved.origin !== base.origin ||
+          (prefix !== '/' &&
+            resolved.pathname !== prefix &&
+            !resolved.pathname.startsWith(prefix + '/'))
+        )
+          rejectEndpoint();
+      } catch {
+        rejectEndpoint();
       }
       config.__authSession ??= { version: auth.getSessionVersion(), replayed: false };
       assertCurrent(config);
@@ -77,21 +105,23 @@ export function createHttpClient({ baseURL, timeoutMs, onUnauthorized, auth }: H
       }
       if (status === 401) onUnauthorized?.();
       const kind =
-        status === 401
-          ? 'unauthorized'
-          : status === 403
-            ? 'forbidden'
-            : status === 404
-              ? 'not-found'
-              : status === 409 || status === 412
-                ? 'conflict'
-                : status === 429
-                  ? 'rate-limit'
-                  : error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
-                    ? 'timeout'
-                    : status === undefined
-                      ? 'network'
-                      : 'server';
+        status === 400 || status === 422
+          ? 'validation'
+          : status === 401
+            ? 'unauthorized'
+            : status === 403
+              ? 'forbidden'
+              : status === 404
+                ? 'not-found'
+                : status === 409 || status === 412
+                  ? 'conflict'
+                  : status === 429
+                    ? 'rate-limit'
+                    : error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+                      ? 'timeout'
+                      : status === undefined
+                        ? 'network'
+                        : 'server';
       throw new HttpError(kind, status);
     },
   );

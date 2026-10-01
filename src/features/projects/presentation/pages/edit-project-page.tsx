@@ -18,7 +18,16 @@ export function EditProjectPage({ id, backHref }: { id: string; backHref: string
           {t(query.fetchStatus === 'paused' ? 'common.offline' : 'projects.loading')}
         </p>
       ) : query.isError ? (
-        <RequestError error={query.error} />
+        <div className="space-y-3">
+          <RequestError error={query.error} />
+          <Button
+            onClick={() => {
+              void query.refetch();
+            }}
+          >
+            {t('projects.retry')}
+          </Button>
+        </div>
       ) : (
         <ProjectForm key={id} project={query.data} />
       )}

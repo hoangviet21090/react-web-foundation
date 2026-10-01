@@ -1,3 +1,4 @@
+import { encodePathSegment } from '@/shared/infrastructure/encode-path-segment';
 import type { ParseKeys } from 'i18next';
 import type { Permission } from '@/features/auth/domain/auth';
 import { updateProjectListSearch } from '@/features/projects/presentation/utils/project-list-search';
@@ -48,8 +49,8 @@ export function projectsHref(params: Partial<ProjectListLocation> = {}): string 
 }
 
 export function projectHref(id: string): string {
-  return APP_ROUTES.project.path.replace(':projectId', encodeURIComponent(id));
+  return APP_ROUTES.project.path.replace(':projectId', encodePathSegment(id));
 }
 export function editProjectHref(id: string): string {
-  return APP_ROUTES.editProject.path.replace(':projectId', encodeURIComponent(id));
+  return APP_ROUTES.editProject.path.replace(':projectId', encodePathSegment(id));
 }

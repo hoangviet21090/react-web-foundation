@@ -30,7 +30,7 @@ Project: id/reference/name, budget nguyên 1..1e9 USD, currency=USD, status=draf
 
 PUT/DELETE thiếu hoặc stale If-Match trả 412. Mock cập nhật version atomically sau khi đã đọc/validate body; hai writer cùng version chỉ một request thành công. Unknown ID trả 404. Demo role được phép read/create/update/delete; viewer chỉ read. Đây là mock authorization, không chứng minh tenant isolation.
 
-409/412 map conflict; 429 rate-limit; timeout giữ thông báo riêng. Mutation không retry network/5xx và không xếp hàng offline. POST chưa có idempotency-key contract: sau timeout cần kiểm tra server state trước khi gửi lại.
+400/422 map validation; 409/412 map conflict; 429 rate-limit; timeout giữ thông báo riêng. Mutation không retry network/5xx và không xếp hàng offline. POST chưa có idempotency-key contract: sau timeout cần kiểm tra server state trước khi gửi lại.
 
 ## Auth
 

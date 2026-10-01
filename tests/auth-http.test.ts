@@ -1,3 +1,4 @@
+import type { InternalAxiosRequestConfig } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 import axios from 'axios';
 import { http, HttpResponse } from 'msw';
@@ -244,6 +245,39 @@ describe('Authenticated HTTP and MSW contract', () => {
     ).rejects.toMatchObject({ kind: 'contract' });
     await session.logout();
     await expect(client.get('/projects')).rejects.toMatchObject({ kind: 'unauthorized' });
+  });
+  it.each([
+    '/../outside',
+    '/../../outside',
+    '/%2e%2e/outside',
+    '/projects/%2E%2E',
+    '/projects/.',
+    '/projects/..',
+    '/%2e%2e%2foutside',
+    '/%2e%2e%5coutside',
+    '/projects/%',
+  ])('rejects BFF path traversal before dispatch: %s', async (endpoint) => {
+    const { client } = await setup();
+    const adapter = vi.fn();
+    client.defaults.adapter = adapter;
+    await expect(client.get(endpoint)).rejects.toMatchObject({ kind: 'contract' });
+    expect(adapter).not.toHaveBeenCalled();
+  });
+  it('permits encoded resource ids and query values within the configured BFF', async () => {
+    const { client } = await setup();
+    const adapter = vi.fn((config: InternalAxiosRequestConfig) =>
+      Promise.resolve({
+        data: success({ ok: true }),
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      }),
+    );
+    client.defaults.adapter = adapter;
+    await client.get('/projects/' + encodeURIComponent('project/item'));
+    await client.get('/projects', { params: { search: '../outside' } });
+    expect(adapter).toHaveBeenCalledTimes(2);
   });
   it('a POST rejected before processing can replay once without creating two drafts', async () => {
     const { client } = await setup();

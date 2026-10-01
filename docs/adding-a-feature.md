@@ -9,7 +9,7 @@ npm run feature:new -- catalog
 
 Generator tạo read-only vertical slice gồm domain, application/ports/use cases, infrastructure/dto/services/mappers/repositories, presentation/contexts/providers/hooks/queries/components/pages và README tích hợp.
 
-Tên phải kebab-case, tối đa 50 ký tự; từ chối traversal hoặc target đã tồn tại. Không ghi đè feature, không tự sửa routing/permissions/locales/mocks. `check:scaffolding` kiểm tra tên, syntax, naming và các nhóm architecture của output.
+Tên phải kebab-case, tối đa 50 ký tự; từ chối traversal, Windows device names (con/prn/aux/nul/com*/lpt*) hoặc target đã tồn tại. Không ghi đè feature, không tự sửa routing/permissions/locales/mocks. Generator format source trước khi ghi, reserve target riêng và rollback các file của chính lượt chạy khi gặp lỗi ghi. check:scaffolding compile TypeScript đầy đủ, lint có type, kiểm tra architecture/core của output cùng dry-run/no-overwrite/failure rollback.
 
 ## Tích hợp theo thứ tự
 
@@ -19,7 +19,7 @@ Tên phải kebab-case, tối đa 50 ký tự; từ chối traversal hoặc targ
 4. Thêm MSW handler cùng response envelope. Đừng return raw array khi service yêu cầu envelope.
 5. Compose service → repository → use cases tại app/composition-root.ts.
 6. Inject qua provider; app route adapter cấp href/callback/quyền vào page.
-7. Thêm path/title/permission vào route registry và lazy route; không hardcode navigation trong page.
+7. Thêm path/title/permission vào route registry và lazy route; không hardcode navigation trong page; dùng encodePathSegment khi đưa opaque ID vào browser/API path.
 8. Đặt copy vi/en, form schema và mutation hooks ở đúng owner. Shared chỉ nhận behavior qua props.
 9. Kiểm tra invariants, malformed payload, cancellation, denied permission, lỗi ghi và flow browser.
 10. Chạy format/check/E2E phù hợp.
@@ -32,4 +32,4 @@ Server entity → Query. Form → RHF. Query string → URL. Shell preferences �
 
 ## Assets và adapter mới
 
-Assets có owner, import qua Vite. SDK/realtime/storage ở infrastructure, ports tại application consumer. Consumer phải dọn subscription/AbortSignal/object URLs khi unmount; viết tests cho lifecycle. Xem [capabilities](capabilities.md) cho các contract còn cần khi thêm upload/offline/SSO.
+Assets có owner, import qua Vite; public/ dành cho asset URL cố định, không chứa worker MSW. SDK/realtime/storage ở infrastructure, ports tại application consumer. Consumer phải dọn subscription/AbortSignal/object URLs khi unmount; viết tests cho lifecycle. Xem [capabilities](capabilities.md) cho các contract còn cần khi thêm upload/offline/SSO.

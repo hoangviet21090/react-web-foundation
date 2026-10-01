@@ -177,7 +177,8 @@ describe('Cancellation across the application boundary', () => {
 
 describe('Error ownership', () => {
   it.each([
-    [400, 'server', false],
+    [400, 'validation', false],
+    [422, 'validation', false],
     [401, 'unauthorized', false],
     [403, 'forbidden', false],
     [404, 'not-found', false],

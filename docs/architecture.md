@@ -19,7 +19,7 @@ flowchart TD
 
 Source dependency đi vào trong; lời gọi runtime có thể đi ra adapter qua port. App tạo dependencies và inject qua providers. Feature không import app hoặc internals của feature khác. Shared không import feature/app.
 
-Architecture gate dùng TypeScript resolver/AST, kiểm tra type-only/dynamic imports và cycles; core compile chặn globals của platform. Infrastructure không import presentation hoặc shared/ui/components/hooks/types/contexts/providers/lib. Shared/types được xác định là presentation, không phải mọi loại type.
+Architecture gate dùng TypeScript resolver/AST, kiểm tra type-only/dynamic imports/declarations, source zones, import ngoài src/tests và cycles; core compile chặn globals của platform. Infrastructure không import presentation hoặc shared/ui/components/hooks/types/contexts/providers/lib. Shared/types được xác định là presentation, không phải mọi loại type.
 
 ## State
 
@@ -34,7 +34,7 @@ Architecture gate dùng TypeScript resolver/AST, kiểm tra type-only/dynamic im
 | Access token                     | Auth session closure                      |
 | Error diagnostics                | Bounded in-memory adapter; không payload  |
 
-DTO được validate tại infrastructure và map sang domain. Không persist Query cache hoặc tokens trong Redux/localStorage. Storage preference xử lý denial/quota bằng fallback memory.
+DTO được validate tại infrastructure và map sang domain. Không persist Query cache hoặc tokens trong Redux/localStorage. Storage preference xử lý denial/quota bằng fallback memory. Query factory có cache scope; mutation callbacks kiểm tra scope quanh async cache operations để không ghi lại dữ liệu sau identity cleanup.
 
 React Router lưu bản đồ vị trí cuộn dạng số trong sessionStorage để khôi phục khi điều hướng/reload; không lưu token hoặc server data ở đó.
 
@@ -44,7 +44,7 @@ HTTP service trả envelope đầy đủ theo API mẫu; repository unwrap và m
 
 DomainError chứa invariant/code. AppError chứa kind/code/retryable; HttpError chỉ ở infrastructure. Cancellation đi qua port thuần rồi bridge sang AbortSignal tại adapter.
 
-GET retry tối đa hai lần cho transient network/5xx. Mutation không retry network/5xx, không tự queue offline. HTTP auth replay tối đa một lần sau 401 theo điều kiện backend từ chối trước side effect. 409/412 là conflict; 429 rate-limit; timeout có thông báo riêng.
+GET retry tối đa hai lần cho transient network/5xx. Mutation không retry network/5xx, không tự queue offline. HTTP auth replay tối đa một lần sau 401 theo điều kiện backend từ chối trước side effect. 400/422 là validation; 409/412 là conflict; 429 rate-limit; timeout có thông báo riêng.
 
 ## Projects làm mẫu
 

@@ -22,4 +22,4 @@ Mục tiêu được đổi thành template web có thể dùng cho nhiều sả
 
 Dev có source dùng được và ma trận capability. Thay domain/backend không cần đổi inner dependency rule. Các phần SSO, upload, realtime, durable offline, tenant isolation và deployment vẫn cần quyết định product được ghi trong capabilities.md.
 
-Thư mục local/branch chưa đổi; metadata và tài liệu là generic. Chưa commit/push/deploy hoặc tạo remote.
+Package và thư mục vật lý hiện cùng tên react-web-foundation; source đã có commit và remote cùng tên. Deployment vẫn cần môi trường và contract sản phẩm.

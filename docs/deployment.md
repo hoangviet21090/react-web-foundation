@@ -23,7 +23,7 @@ Starter hiện host tại root /. Vite base, React Router và recovery URL chưa
 
 Cache: hashed `/assets/*` trả 200/206/304 được immutable một năm; index.html và response lỗi (kể cả asset 404) dùng no-store. TLS/HSTS tại ingress. CSP ví dụ chỉ cùng origin, frame-ancestors none, no object; đổi connect-src có review nếu BFF khác origin. Security headers không thể được Vite dev server chứng minh thay cho ingress thật.
 
-`publicDir` tắt cho production để worker MSW không bị copy. Asset production đặt trong feature presentation/assets hoặc shared/assets và import từ code; nếu cần robots/favicon root, thêm build step allowlist có test để không đem worker vào build.
+public/ được sao chép cho mọi build và dùng cho favicon/robots/font cần URL cố định. Asset có owner cần hashing đặt trong feature/presentation/assets hoặc shared/assets rồi import. Worker MSW được plugin riêng đọc từ package đã pin, chỉ phục vụ/phát trong mode mock/demo khi bật mock; không đặt worker vào public/. check:config xác minh static asset còn trong production và worker chỉ có ở demo; check:build chặn mock/devtools/source maps.
 
 Triển khai atomically và giữ hashed assets của release trước trong khoảng thời gian team quy định để tab đang mở vẫn tải được lazy chunks. Khi chunk đã mất, app hiển thị recovery và tải lại document bằng thao tác người dùng; không tự reload vòng lặp hoặc tự khôi phục form chưa lưu.
 
@@ -35,7 +35,7 @@ Không đặt production trên origin từng phục vụ demo/MSW. Nếu môi tr
 - Azure DevOps: azure-pipelines.yml equivalent quality gate, không tự publish release.
 - Dependabot: PR cập nhật npm/GitHub Actions theo tuần, không auto-merge.
 - Build không có token thật; dev tests dùng MSW. Browser binaries được cài trong job. Sau dev E2E, test:e2e:production build lại rồi kiểm tra dist bằng Chromium với API stub trong test runner; không bật MSW trong app production.
-- Maintainer cấu hình branch protection/build validation và chọn base/remote. GitHub Actions chạy khi remote được tạo và workflow được push; Azure template phải được đăng ký pipeline. Chưa có remote run trong bước bootstrap local.
+- Maintainer cấu hình branch protection/build validation và chọn base/remote. Workflow đã được push lên GitHub; không suy ra CI đang xanh từ checks local. Azure template phải được đăng ký pipeline; maintainer kiểm tra remote runs và required checks trên host được chọn.
 
 Chưa cấu hình deployment credentials, domain, SSO/BFF upstream, environment approval hoặc release pipeline vì team chưa cung cấp. Không tự publish/bump version để biến scaffold thành một release.
 

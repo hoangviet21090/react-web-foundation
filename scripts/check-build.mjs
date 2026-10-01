@@ -18,7 +18,7 @@ if (files.some((file) => /mockServiceWorker|fixtures|handlers/.test(path.basenam
 for (const file of files.filter((entry) => /\.js$/.test(entry))) {
   const content = fs.readFileSync(file, 'utf8');
   if (
-    content.includes('CLM-DEMO-001') ||
+    content.includes('PRJ-DEMO-001') ||
     content.includes('mockServiceWorker.js') ||
     content.includes('foundation_mock_session') ||
     content.includes('mock-access-') ||

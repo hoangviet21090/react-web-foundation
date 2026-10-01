@@ -1,3 +1,6 @@
+import ts from 'typescript';
+import { checkSourceArchitecture } from './architecture-rules.mjs';
+import { virtualCompilerHost } from './virtual-source.mjs';
 import { namingViolations } from './naming-rules.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -92,3 +95,128 @@ for (const [file, source] of [
 ])
   assert.ok(namingViolations(file, source).length > 0, file);
 console.info('Naming positive/negative checks verified.');
+
+const appConfiguration = ts.readConfigFile('tsconfig.app.json', ts.sys.readFile);
+const compilerOptions = ts.parseJsonConfigFileContent(
+  appConfiguration.config,
+  ts.sys,
+  process.cwd(),
+).options;
+const sourceRoot = path.resolve('src');
+const architectureCases = [
+  {
+    source: 'features/sample/domain/sample.ts',
+    code: 'export interface Sample { id: string }',
+    valid: true,
+  },
+  {
+    source: 'features/sample/application/read.ts',
+    code: "import type { Sample } from '../domain/sample'; export type Read = () => Sample;",
+    extra: { 'src/features/sample/domain/sample.ts': 'export interface Sample { id: string }' },
+    valid: true,
+  },
+  {
+    source: 'features/sample/domain/sample.ts',
+    code: "import type { ReactNode } from 'react'; export type Sample = ReactNode;",
+    problem: 'plain TypeScript',
+  },
+  {
+    source: 'features/sample/domain/sample.d.ts',
+    code: "import type { ReactNode } from 'react'; export type Sample = ReactNode;",
+    problem: 'plain TypeScript',
+  },
+  {
+    source: 'features/sample/services/service.ts',
+    code: 'export const value = 1;',
+    problem: 'Feature source must belong',
+  },
+  {
+    source: 'shared/misc/helper.ts',
+    code: 'export const value = 1;',
+    problem: 'Shared source must belong',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "import { hidden } from '../../../../tests/hidden'; export const value = hidden;",
+    extra: { 'tests/hidden.ts': 'export const hidden = 1;' },
+    problem: 'outside src',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "export type Value = import('../../../../tests/hidden').Hidden;",
+    extra: { 'tests/hidden.ts': 'export interface Hidden {}' },
+    problem: 'outside src',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "export { hidden } from '../../../../scripts/hidden';",
+    extra: { 'scripts/hidden.ts': 'export const hidden = 1;' },
+    problem: 'outside src',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "import { value } from './hidden.test'; export const result = value;",
+    extra: { 'src/features/sample/presentation/hidden.test.ts': 'export const value = 1;' },
+    problem: 'import tests',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "import { hidden } from '../infrastructure/adapter'; export const value = hidden;",
+    extra: { 'src/features/sample/infrastructure/adapter.ts': 'export const hidden = 1;' },
+    problem: 'concrete feature adapters',
+  },
+  {
+    source: 'features/sample/infrastructure/adapter.ts',
+    code: "import { hidden } from '../presentation/view'; export const value = hidden;",
+    extra: { 'src/features/sample/presentation/view.ts': 'export const hidden = 1;' },
+    problem: 'Infrastructure cannot import presentation',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "import { hidden } from '../../other/domain/other'; export const value = hidden;",
+    extra: { 'src/features/other/domain/other.ts': 'export const hidden = 1;' },
+    problem: 'separate features',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: 'export const value = import(variable);',
+    problem: 'Non-literal dynamic imports',
+  },
+  {
+    source: 'features/sample/presentation/page.ts',
+    code: "export { value } from './missing';",
+    problem: 'could not be resolved',
+  },
+  {
+    source: 'features/sample/domain/first.ts',
+    code: "import { second } from './second'; export const first = second;",
+    extra: {
+      'src/features/sample/domain/second.ts':
+        "import { first } from './first'; export const second = first;",
+    },
+    problem: 'Circular dependency',
+  },
+];
+for (const scenario of architectureCases) {
+  const file = path.resolve(sourceRoot, scenario.source);
+  const sources = new Map([
+    [file, scenario.code],
+    ...Object.entries(scenario.extra ?? {}).map(([name, source]) => [path.resolve(name), source]),
+  ]);
+  const host = virtualCompilerHost(compilerOptions, sources);
+  const result = checkSourceArchitecture({
+    root: sourceRoot,
+    files: [...sources.keys()].filter((file) => file.startsWith(sourceRoot + path.sep)),
+    compilerOptions,
+    host,
+  });
+  if (scenario.valid) assert.deepEqual(result.failures, [], scenario.source);
+  else
+    assert.ok(
+      result.failures.some((failure) => failure.includes(scenario.problem)),
+      scenario.source + ': ' + result.failures.join('\n'),
+    );
+}
+console.info(
+  'Architecture positive/negative checks verified: zones, layers, imports outside src, test/declaration/dynamic imports and cycles.',
+);

@@ -69,11 +69,16 @@ console.info(
 const brandingSource = `
   import assert from 'node:assert/strict';
   import { build } from 'vite';
+  import fs from 'node:fs';
+  import os from 'node:os';
+  import path from 'node:path';
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'foundation-production-'));
+  try {
   const result = await build({
     mode: 'production',
     configFile: 'vite.config.ts',
     logLevel: 'silent',
-    build: { write: false },
+    build: { outDir, emptyOutDir: false },
   });
   const outputs = Array.isArray(result) ? result : [result];
   const html = outputs.flatMap(item => item.output)
@@ -81,6 +86,11 @@ const brandingSource = `
   assert.ok(html && typeof html.source === 'string');
   assert.ok(html.source.includes('<title>Workspace $&amp; &lt;Portal&gt;</title>'));
   assert.ok(html.source.includes('<html lang="en">'));
+  assert.equal(fs.readFileSync(path.join(outDir, 'favicon.svg'), 'utf8'), fs.readFileSync('public/favicon.svg', 'utf8'));
+  assert.equal(fs.existsSync(path.join(outDir, 'mockServiceWorker.js')), false);
+  } finally {
+    if (outDir.startsWith(path.resolve(os.tmpdir()) + path.sep)) fs.rmSync(outDir, { recursive: true, force: true });
+  }
 `;
 const branding = spawnSync(process.execPath, ['--input-type=module', '-e', brandingSource], {
   env: {
@@ -100,4 +110,26 @@ assert.equal(
     branding.stdout +
     branding.stderr,
 );
-console.info('Custom branding and default locale verified in an in-memory production build.');
+console.info(
+  'Custom branding/default locale and public assets verified in a production build without MSW.',
+);
+
+const demoSource = `
+  import assert from 'node:assert/strict';
+  import { build } from 'vite';
+  const result = await build({ mode: 'demo', configFile: 'vite.config.ts', logLevel: 'silent', build: { write: false } });
+  const outputs = (Array.isArray(result) ? result : [result]).flatMap(item => item.output);
+  assert.ok(outputs.some(item => item.type === 'asset' && item.fileName === 'mockServiceWorker.js'));
+`;
+const demo = spawnSync(process.execPath, ['--input-type=module', '-e', demoSource], {
+  env: { ...process.env, ...defaults, VITE_ENABLE_MOCKS: 'true' },
+  encoding: 'utf8',
+  timeout: 60_000,
+});
+if (demo.error) throw demo.error;
+assert.equal(
+  demo.status,
+  0,
+  'Explicit demo builds must include the pinned MSW worker: ' + demo.stdout + demo.stderr,
+);
+console.info('Explicit demo build verified with its isolated MSW worker.');

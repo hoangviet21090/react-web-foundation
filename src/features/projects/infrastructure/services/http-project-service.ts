@@ -1,3 +1,4 @@
+import { encodePathSegment } from '@/shared/infrastructure/encode-path-segment';
 import type { HttpClient } from '@/shared/infrastructure/http/http-client';
 import { parseResponse } from '@/shared/infrastructure/http/response';
 import type { ApiResponse, PaginatedResult } from '@/shared/infrastructure/http/response';
@@ -8,7 +9,7 @@ import type { ProjectDto } from '../dto/project-dto';
 
 export const PROJECT_ENDPOINTS = {
   collection: '/projects',
-  detail: (id: string) => '/projects/' + encodeURIComponent(id),
+  detail: (id: string) => '/projects/' + encodePathSegment(id),
 } as const;
 export function createHttpProjectService(http: HttpClient) {
   return {

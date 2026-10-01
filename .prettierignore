@@ -4,6 +4,5 @@ coverage
 playwright-report
 test-results
 package-lock.json
-public/mockServiceWorker.js
 AGENTS.md
 AGENTS.override.md

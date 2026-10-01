@@ -1,5 +1,9 @@
 export function featureFiles(name) {
-  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name) || name.length > 50)
+  if (
+    !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name) ||
+    name.length > 50 ||
+    /^(?:con|prn|aux|nul|com[0-9]|lpt[0-9])$/i.test(name)
+  )
     throw new Error('Use a kebab-case feature name, at most 50 characters.');
   const type = name
     .split('-')
@@ -164,11 +168,11 @@ export function featureFiles(name) {
       type +
       "List } from '../components/" +
       name +
-      "-list';\nimport { RequestError } from '@/shared/components/request-error';\nexport function " +
+      "-list';\nimport { RequestError } from '@/shared/components/request-error';\nimport { Button } from '@/shared/ui/button';\nexport function " +
       type +
-      'Page({ title, loadingLabel, emptyLabel }: { title: string; loadingLabel: string; emptyLabel: string }) { const query = use' +
+      'Page({ title, loadingLabel, offlineLabel, emptyLabel, retryLabel }: { title: string; loadingLabel: string; offlineLabel: string; emptyLabel: string; retryLabel: string }) { const query = use' +
       type +
-      '(); return <section><h1 className="text-2xl font-semibold">{title}</h1>{query.isPending ? <p role="status">{loadingLabel}</p> : query.isError ? <RequestError error={query.error} /> : query.data.length ? <' +
+      '(); return <section><h1 className="text-2xl font-semibold">{title}</h1>{query.isPending ? <p role="status">{query.fetchStatus === "paused" ? offlineLabel : loadingLabel}</p> : query.isError ? <div className="space-y-3"><RequestError error={query.error} /><Button onClick={() => { void query.refetch(); }}>{retryLabel}</Button></div> : query.data.length ? <' +
       type +
       'List items={query.data} /> : <p>{emptyLabel}</p>}</section>; }\n',
     'README.md':
@@ -176,6 +180,6 @@ export function featureFiles(name) {
       type +
       '\n\nGenerated read-only vertical slice. Proposed endpoint: GET /' +
       name +
-      ', envelope result is an array of { id, name }. Confirm or mock this contract before mounting.\n\n1. Compose service -> repository -> use cases in app/composition-root.\n2. Inject through the generated provider.\n3. Add a registry route + lazy adapter with localized title/loading/empty labels and an appropriate permission guard.\n4. Add an MSW handler returning the same response envelope.\n5. Add invariant/contract/browser tests for your behavior.\n6. Add forms, schemas, mutation hooks and view types when needed; Projects shows full CRUD, conflict handling and unsaved changes.\n\nThe generator does not edit global routing, translations, mocks or permissions. Run npm run format and npm run check after integration.\n',
+      ', envelope result is an array of { id, name }. Confirm or mock this contract before mounting.\n\n1. Compose service -> repository -> use cases in app/composition-root.\n2. Inject through the generated provider.\n3. Add a registry route + lazy adapter with localized title/loading/offline/empty/retry labels and an appropriate permission guard.\n4. Add an MSW handler returning the same response envelope.\n5. Add invariant/contract/browser tests for your behavior.\n6. Add forms, schemas, mutation hooks and view types when needed; Projects shows full CRUD, conflict handling and unsaved changes.\n\nThe generator does not edit global routing, translations, mocks or permissions. Run npm run format and npm run check after integration.\n',
   };
 }

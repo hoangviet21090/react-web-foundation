@@ -2,7 +2,7 @@
 
 ## Bắt đầu
 
-Đọc [structure](docs/project-structure.md), [architecture](docs/architecture.md), [naming](docs/naming.md) và [capabilities](docs/capabilities.md). Xác nhận requirements/base branch của repository đang làm; không kế thừa workflow của một repo khác.
+Bắt đầu từ [onboarding](docs/getting-started.md) và [cấu hình thư viện](docs/library-configuration.md). Đọc [structure](docs/project-structure.md), [architecture](docs/architecture.md), [naming](docs/naming.md) và [capabilities](docs/capabilities.md). Xác nhận requirements/base branch của repository đang làm; không kế thừa workflow của một repo khác.
 
 ```sh
 git status --short
@@ -11,7 +11,7 @@ git switch -c feat/project-search origin/<confirmed-base>
 npm ci
 ```
 
-Repo local hiện chưa có remote. Không chạy fetch cho đến khi team đã cấu hình remote.
+Repository đã có remote GitHub. Khi clone/adopt sang repo mới, kiểm tra git remote -v và base branch đã thống nhất trước khi tạo branch; không suy ra base từ tên example branch.
 
 ## Git conventions
 

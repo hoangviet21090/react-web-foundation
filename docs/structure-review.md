@@ -1,6 +1,6 @@
 # Rà soát cấu trúc foundation
 
-Repo đã chuyển mục tiêu từ starter nghiệp vụ cụ thể thành base React web dùng chung. Package name là react-web-foundation; local directory và branch cũ được giữ để không gián đoạn IDE.
+Repo đã chuyển mục tiêu từ starter nghiệp vụ cụ thể thành base React web dùng chung. Package và thư mục vật lý cùng tên react-web-foundation. Source đã được push lên remote cùng tên; branch bootstrap không phải convention bắt buộc cho dev mới.
 
 ## Quyết định hiện tại
 
@@ -20,4 +20,4 @@ Không làm phẳng nhóm chỉ vì một file. Không tạo dummy services/type
 
 [Structure](project-structure.md), [architecture](architecture.md), [naming](naming.md), [feature recipe](adding-a-feature.md), [configuration audit](configuration-audit.md).
 
-Quality gate, 159 Vitest tests, 22 browser tests và 3 production smoke tests đã đạt; xem kết quả trong [configuration audit](configuration-audit.md). Backend và hosting thật vẫn cần xác minh ở môi trường adopt.
+Kết quả quality gate và browser tests được cập nhật ở [configuration audit](configuration-audit.md). Bản rà soát mới bổ sung source-zone/import enforcement, generated-code checking, cấu hình UI/HTTP/cache và tài liệu onboarding. Backend và hosting thật vẫn cần xác minh ở môi trường adopt.

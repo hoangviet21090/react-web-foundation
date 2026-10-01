@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv } from 'vite';
+import { mockWorker } from './scripts/vite-plugins/mock-worker.ts';
 import { parseEnv } from './src/shared/infrastructure/config/env-schema.ts';
 
 export default defineConfig(({ mode, command }) => {
@@ -20,6 +21,7 @@ export default defineConfig(({ mode, command }) => {
     plugins: [
       react(),
       tailwindcss(),
+      mockWorker(publicEnv.VITE_ENABLE_MOCKS === 'true'),
       {
         name: 'public-document-config',
         transformIndexHtml(html) {
@@ -32,8 +34,8 @@ export default defineConfig(({ mode, command }) => {
         },
       },
     ],
-    // The production build never copies the MSW worker.
-    publicDir: allowMocks ? 'public' : false,
+    // Static assets remain available in every mode; MSW is served by its isolated plugin.
+    publicDir: 'public',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     server: { host: '127.0.0.1', port: 5173, strictPort: true },
     preview: { host: '127.0.0.1', port: 4173, strictPort: true },

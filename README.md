@@ -64,6 +64,8 @@ deployment/
 
 Giữ nhóm folder có trách nhiệm rõ dù ít file để dev có mẫu mở rộng. Không gom type/use case/service mọi feature vào shared.
 
+**Dev mới bắt đầu:** [onboarding](docs/getting-started.md) và [cấu hình thư viện](docs/library-configuration.md).
+
 **Đọc trước khi code:** [nơi đặt code](docs/project-structure.md) → [kiến trúc](docs/architecture.md) → [naming](docs/naming.md) → [thêm feature](docs/adding-a-feature.md) → [quy trình](CONTRIBUTING.md).
 
 ## Lệnh
@@ -92,4 +94,4 @@ Cài Chromium lần đầu: `npx playwright install chromium`. PowerShell chặn
 4. Cấu hình env, identity, permissions và [deployment](docs/deployment.md).
 5. Chạy gates; thiết lập remote, branch protection, CI và quy trình release của team.
 
-Chưa commit/push/deploy. Remote và môi trường production chưa được cấu hình.
+Source đã được push lên [hoangviet21090/react-web-foundation](https://github.com/hoangviet21090/react-web-foundation). Môi trường production và release pipeline cần được team cấu hình khi adopt.

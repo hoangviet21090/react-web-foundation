@@ -46,11 +46,6 @@
       "prettier --write"
     ]
   },
-  "msw": {
-    "workerDirectory": [
-      "public"
-    ]
-  },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
     "@reduxjs/toolkit": "2.13.0",
