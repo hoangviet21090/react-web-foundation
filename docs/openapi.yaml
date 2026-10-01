@@ -1,0 +1,703 @@
+openapi: 3.1.0
+info:
+  title: React Web Foundation - sample contract
+  version: 0.1.0
+  description: Mock-backed template API. Replace infrastructure contracts when adopting another
+    backend. Permissions use resource:action. Write replay after 401 requires no side effects before
+    rejection.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /projects:
+    get:
+      operationId: listProjects
+      description: Requires projects:read. Newest first; name/reference search.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+            default: ''
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+    post:
+      operationId: createProject
+      description: Requires projects:create. This contract has no idempotency key; do not blindly retry writes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProject'
+      responses:
+        '201':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+  /projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: getProject
+      description: Requires projects:read.
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+    put:
+      operationId: updateProject
+      description: Requires projects:update. Atomic version comparison; increments version on success.
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^"[1-9][0-9]*"$
+          description: Quoted version from the last read; stale or missing version returns 412.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProject'
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '412':
+          description: Version conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+    delete:
+      operationId: deleteProject
+      description: Requires projects:delete.
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^"[1-9][0-9]*"$
+          description: Quoted version from the last read; stale or missing version returns 412.
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '412':
+          description: Version conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+  /auth/login:
+    post:
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCredentials'
+      description: Backend establishes/rotates an HttpOnly Secure refresh cookie. Token responses are no-store.
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+  /auth/refresh:
+    post:
+      operationId: refresh
+      security:
+        - refreshCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: []
+              properties: {}
+      description:
+        Cookie/CSRF protected; response includes a memory access token, never a refresh token
+        JSON field.
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+  /auth/logout:
+    post:
+      operationId: logout
+      security:
+        - refreshCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: []
+              properties: {}
+      description: Revoke server session/token family and expire refresh cookie with the same name/path/domain.
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '401':
+          description: Authentication required; no side effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+        default:
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Failure'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+  schemas:
+    SuccessMetadata:
+      type: object
+      required:
+        - success
+        - errorCode
+        - errorDetails
+        - message
+      properties:
+        success:
+          const: true
+        errorCode:
+          type: 'null'
+        errorDetails:
+          type: 'null'
+        message:
+          type: 'null'
+    Failure:
+      type: object
+      required:
+        - success
+        - result
+        - errorCode
+        - errorDetails
+        - message
+      properties:
+        success:
+          const: false
+        result:
+          type: 'null'
+        errorCode:
+          type:
+            - string
+            - number
+            - 'null'
+        errorDetails:
+          type:
+            - string
+            - 'null'
+        message:
+          type:
+            - string
+            - 'null'
+    Project:
+      type: object
+      required:
+        - id
+        - reference
+        - name
+        - budget
+        - currency
+        - status
+        - createdAt
+        - version
+      properties:
+        id:
+          type: string
+          minLength: 1
+        reference:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        budget:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        currency:
+          const: USD
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - archived
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+    CreateProject:
+      type: object
+      required:
+        - name
+        - budget
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        budget:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+    UpdateProject:
+      type: object
+      required:
+        - name
+        - budget
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        budget:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - archived
+    ProjectResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMetadata'
+        - type: object
+          required:
+            - result
+          properties:
+            result:
+              $ref: '#/components/schemas/Project'
+    ProjectListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMetadata'
+        - type: object
+          required:
+            - result
+          properties:
+            result:
+              type: object
+              required:
+                - items
+                - totalCount
+                - page
+                - pageSize
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Project'
+                totalCount:
+                  type: integer
+                  minimum: 0
+                page:
+                  type: integer
+                  minimum: 1
+                pageSize:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+    DeleteResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMetadata'
+        - type: object
+          required:
+            - result
+          properties:
+            result:
+              type: object
+              required:
+                - deleted
+              properties:
+                deleted:
+                  const: true
+    LoginCredentials:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          writeOnly: true
+    AuthUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - permissions
+      properties:
+        id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        permissions:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMetadata'
+        - type: object
+          required:
+            - result
+          properties:
+            result:
+              type: object
+              required:
+                - accessToken
+                - expiresInSeconds
+                - user
+              properties:
+                accessToken:
+                  type: string
+                  minLength: 1
+                expiresInSeconds:
+                  type: integer
+                  minimum: 1
+                user:
+                  $ref: '#/components/schemas/AuthUser'
+    LogoutResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMetadata'
+        - type: object
+          required:
+            - result
+          properties:
+            result:
+              type: object
+              required:
+                - loggedOut
+              properties:
+                loggedOut:
+                  const: true

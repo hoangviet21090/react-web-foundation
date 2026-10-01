@@ -1,0 +1,50 @@
+# Register this pipeline and enable branch build-validation in Azure Repos.
+trigger:
+  branches:
+    include:
+      - '*'
+pr:
+  branches:
+    include:
+      - '*'
+pool:
+  vmImage: ubuntu-latest
+variables:
+  CI: 'true'
+  HUSKY: '0'
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: false
+  - task: UseNode@1
+    inputs:
+      version: '24.18.1'
+  - script: npm ci
+    displayName: Install locked dependencies
+  - bash: |
+      set -euo pipefail
+      base="${TARGET_BRANCH#refs/heads/}"
+      npx --no-install commitlint --from "origin/$base" --to HEAD
+    displayName: Commit conventions
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    env:
+      TARGET_BRANCH: $(System.PullRequest.TargetBranch)
+  - script: npm run check
+    displayName: Quality gate
+  - script: npm audit --audit-level=high
+    displayName: Dependency audit
+  - script: npx playwright install --with-deps chromium
+    displayName: Install test browser
+  - script: npm run test:e2e
+    displayName: Browser and accessibility checks
+  - script: npm run test:e2e:production
+    displayName: Production artifact smoke tests
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: dist
+      artifact: web-dist
+  - task: PublishPipelineArtifact@1
+    condition: succeededOrFailed()
+    inputs:
+      targetPath: playwright-report
+      artifact: playwright-report

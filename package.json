@@ -1,0 +1,113 @@
+{
+  "name": "react-web-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable React web foundation with feature-oriented Clean Architecture",
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.16.0",
+  "scripts": {
+    "dev": "vite --mode mock",
+    "dev:api": "vite --mode development",
+    "build": "npm run typecheck && vite build",
+    "build:demo": "npm run typecheck && vite build --mode demo",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:architecture": "node scripts/check-architecture.mjs && npm run check:core",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "check": "npm run format:check && npm run lint && npm run check:naming && npm run check:architecture && npm run check:tooling && npm run check:scaffolding && npm run check:config && npm run typecheck && npm run test:coverage && npm run build && npm run check:build",
+    "prepare": "node scripts/prepare.mjs",
+    "ui:add": "node scripts/add-ui.mjs",
+    "check:tooling": "node scripts/check-tooling.mjs",
+    "check:build": "node scripts/check-build.mjs",
+    "check:core": "tsc -p tsconfig.core.json --pretty",
+    "check:config": "node scripts/check-config.mjs",
+    "test:e2e:production": "npm run build && npm run check:build && playwright test --config playwright.production.config.ts",
+    "check:naming": "node scripts/check-naming.mjs",
+    "feature:new": "node scripts/create-feature.mjs",
+    "check:scaffolding": "node scripts/check-scaffolding.mjs"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.9.1",
+    "@reduxjs/toolkit": "2.13.0",
+    "@tanstack/react-query": "5.104.0",
+    "@tanstack/react-query-devtools": "5.104.0",
+    "axios": "1.20.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "dayjs": "1.11.23",
+    "i18next": "26.4.2",
+    "lucide-react": "1.49.0",
+    "radix-ui": "1.6.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.89.0",
+    "react-i18next": "17.0.15",
+    "react-redux": "9.3.0",
+    "react-router": "7.18.4",
+    "redux-thunk": "3.1.0",
+    "tailwind-merge": "3.7.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@commitlint/cli": "21.2.3",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/node": "24.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "@vitest/coverage-v8": "4.1.11",
+    "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.12.0",
+    "husky": "9.1.7",
+    "jsdom": "30.1.1",
+    "lint-staged": "17.6.0",
+    "msw": "2.15.0",
+    "prettier": "3.9.9",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "shadcn": "4.21.0",
+    "tailwindcss": "4.3.3",
+    "tw-animate-css": "1.4.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.0",
+    "vite": "8.3.1",
+    "vitest": "4.1.11"
+  },
+  "license": "UNLICENSED",
+  "allowScripts": {
+    "msw@2.15.0": true
+  }
+}
