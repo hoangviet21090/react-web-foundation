@@ -37,7 +37,7 @@ steps:
     displayName: Install test browser
   - script: npm run test:e2e
     displayName: Browser and accessibility checks
-  - script: npm run test:e2e:production
+  - script: npx --no-install playwright test --config playwright.production.config.ts
     displayName: Production artifact smoke tests
   - task: PublishPipelineArtifact@1
     inputs:

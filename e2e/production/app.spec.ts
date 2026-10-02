@@ -107,10 +107,15 @@ test('missing lazy chunk shows recovery and a fresh document can load it again',
   await stubApi(page);
   await login(page, '/projects');
   await expect(page.getByRole('heading', { name: 'Projects overview' })).toBeVisible();
-  const pattern = '**/assets/new-project-route-*.js';
-  await page.route(pattern, (route) => route.abort());
+  const pattern = '**/assets/new-project-page-*.js';
+  let blockedChunk = false;
+  await page.route(pattern, (route) => {
+    blockedChunk = true;
+    return route.abort();
+  });
   await page.getByRole('link', { name: 'New project', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Unable to load the application' })).toBeVisible();
+  expect(blockedChunk).toBe(true);
   await page.unroute(pattern);
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Projects overview' })).toBeVisible();

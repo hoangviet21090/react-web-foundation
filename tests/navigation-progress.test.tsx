@@ -2,8 +2,8 @@ import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router';
 import { I18nextProvider } from 'react-i18next';
-import { NavigationProgress } from '@/app/routing/navigation-progress';
-import { createI18n } from '@/shared/infrastructure/i18n/i18n';
+import { NavigationProgress } from '@/routes/navigation-progress';
+import { createI18n } from '@/config/i18n';
 
 describe('Lazy route navigation feedback', () => {
   it('announces progress while a destination loads and clears it when navigation finishes', async () => {

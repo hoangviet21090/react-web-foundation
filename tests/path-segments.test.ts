@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { projectHref, editProjectHref } from '@/app/routing/routes';
-import { PROJECT_ENDPOINTS } from '@/features/projects/infrastructure/services/http-project-service';
+import { projectHref, editProjectHref } from '@/constants/routes';
+import { PROJECT_ENDPOINTS } from '@/constants/endpoints';
 
 describe('Resource identifiers in URLs', () => {
   it.each(['', ' ', '.', '..', 'id\nvalue', String.fromCharCode(0xd800)])(

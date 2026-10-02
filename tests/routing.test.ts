@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { matchRoutes } from 'react-router';
-import { createAppRoutes } from '@/app/routing/router';
-import { APP_ROUTES, projectsHref } from '@/app/routing/routes';
-import { safeReturnTo } from '@/app/routing/guards/return-to';
-import {
-  parseProjectListSearch,
-  updateProjectListSearch,
-} from '@/features/projects/presentation/utils/project-list-search';
+import { createAppRoutes } from '@/routes/router';
+import { APP_ROUTES, projectsHref } from '@/constants/routes';
+import { safeReturnTo } from '@/routes/return-to';
+import { parseProjectListSearch, updateProjectListSearch } from '@/routes/project-list-search';
 
 describe('Browser URL boundaries', () => {
   it.each(['0', '-1', '1.5', '1e2', '0x10', 'Infinity', 'NaN', '9007199254740992', '02', ''])(

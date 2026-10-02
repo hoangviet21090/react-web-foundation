@@ -4,11 +4,13 @@ import axios from 'axios';
 import { z } from 'zod';
 import { issueMockSession } from '@/mocks/auth-handlers';
 import { server } from './server';
-import { createHttpClient } from '@/shared/infrastructure/http/http-client';
-import { parseResponse, requireResult } from '@/shared/infrastructure/http/response';
-import { createHttpProjectService } from '@/features/projects/infrastructure/services/http-project-service';
-import { createHttpProjectRepository } from '@/features/projects/infrastructure/repositories/http-project-repository';
-import { success, failure, mockApiUrl } from '@/mocks/handlers';
+import { createHttpClient } from '@/config/http/http-client';
+import { parseResponse } from '@/config/http/response';
+import { requireResult } from '@/usecases/response';
+import { createProjectService } from '@/services/project-service';
+import { createProjectUseCases } from '@/usecases/project-usecases';
+import { success, failure } from '@/mocks/response';
+import { mockApiUrl } from '@/mocks/handlers';
 const makeClient = () => {
   const client = createHttpClient({ baseURL: 'http://localhost/api', timeoutMs: 1000 });
   client.defaults.headers.common.Authorization = 'Bearer ' + issueMockSession().accessToken;
@@ -18,7 +20,7 @@ const params = { page: 1, pageSize: 5, search: '' };
 
 describe('HTTP project adapter', () => {
   it('retains the full standard response at the service boundary', async () => {
-    const response = await createHttpProjectService(makeClient()).list(params);
+    const response = await createProjectService(makeClient()).list(params);
     expect(response).toMatchObject({
       success: true,
       errorCode: null,
@@ -27,31 +29,31 @@ describe('HTTP project adapter', () => {
     expect(response.result?.items).toHaveLength(5);
   });
   it('maps validated results into the domain and applies pagination/search', async () => {
-    const repository = createHttpProjectRepository(createHttpProjectService(makeClient()));
-    const second = await repository.list({ ...params, page: 2 });
+    const projects = createProjectUseCases(createProjectService(makeClient()));
+    const second = await projects.list({ ...params, page: 2 });
     expect(second.items).toHaveLength(1);
-    const found = await repository.list({ ...params, search: 'PRJ-DEMO-001' });
+    const found = await projects.list({ ...params, search: 'PRJ-DEMO-001' });
     expect(found.items[0]?.reference).toBe('PRJ-DEMO-001');
   });
   it('creates a draft through the same HTTP stack and lists it', async () => {
-    const repository = createHttpProjectRepository(createHttpProjectService(makeClient()));
-    const created = await repository.create({ name: 'New Demo', budget: 500 });
+    const projects = createProjectUseCases(createProjectService(makeClient()));
+    const created = await projects.create({ name: 'New Demo', budget: 500 });
     expect(created).toMatchObject({ name: 'New Demo', budget: 500, status: 'draft' });
-    expect((await repository.list(params)).totalCount).toBe(7);
+    expect((await projects.list(params)).totalCount).toBe(7);
   });
-  it('returns a business failure envelope unchanged before repository handling', async () => {
+  it('returns a business failure envelope unchanged before usecase handling', async () => {
     server.use(
       http.get(mockApiUrl, () =>
         HttpResponse.json(failure('Rejected by test', 'PROJECT_REJECTED')),
       ),
     );
-    const service = createHttpProjectService(makeClient());
+    const service = createProjectService(makeClient());
     expect(await service.list(params)).toMatchObject({
       success: false,
       errorCode: 'PROJECT_REJECTED',
       result: null,
     });
-    await expect(createHttpProjectRepository(service).list(params)).rejects.toMatchObject({
+    await expect(createProjectUseCases(service).list(params)).rejects.toMatchObject({
       kind: 'business',
       code: 'PROJECT_REJECTED',
     });
@@ -92,7 +94,7 @@ describe('HTTP project adapter', () => {
     server.use(
       http.get(mockApiUrl, () => HttpResponse.json(success({ items: [], totalCount: 'six' }))),
     );
-    await expect(createHttpProjectService(makeClient()).list(params)).rejects.toMatchObject({
+    await expect(createProjectService(makeClient()).list(params)).rejects.toMatchObject({
       kind: 'contract',
     });
   });

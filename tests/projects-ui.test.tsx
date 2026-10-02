@@ -1,39 +1,35 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
-import { ProjectForm } from '@/features/projects/presentation/components/project-form';
-import { ProjectsPage } from '@/features/projects/presentation/pages/projects-page';
-import { ProjectsProvider } from '@/features/projects/presentation/providers/projects-provider';
-import { createQueryClient } from '@/shared/infrastructure/query-client';
-import { createI18n } from '@/shared/infrastructure/i18n/i18n';
-import { createHttpClient } from '@/shared/infrastructure/http/http-client';
-import { createHttpProjectService } from '@/features/projects/infrastructure/services/http-project-service';
-import { createHttpProjectRepository } from '@/features/projects/infrastructure/repositories/http-project-repository';
-import { createProjectUseCases } from '@/features/projects/application/project-use-cases';
-import { issueMockSession } from '@/mocks/auth-handlers';
+import { ProjectForm } from '@/components/projects/project-form';
+import { ProjectsPage } from '@/pages/projects-page';
+import { Provider } from 'react-redux';
+import { createAppRuntime } from '@/config/runtime';
 import { server } from './server';
-import { failure, mockApiUrl, success } from '@/mocks/handlers';
+import { failure, success } from '@/mocks/response';
+import { mockApiUrl } from '@/mocks/handlers';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 async function renderFlow() {
-  const i18n = await createI18n('en');
-  const client = createQueryClient();
-  client.setDefaultOptions({
+  vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+  const runtime = await createAppRuntime();
+  await runtime.i18n.changeLanguage('en');
+  await runtime.auth.login({ email: 'demo@example.test', password: 'Demo123!' });
+  runtime.queryClient.setDefaultOptions({
     queries: { retry: false },
     mutations: { retry: false, networkMode: 'always' },
   });
-  const httpClient = createHttpClient({ baseURL: 'http://localhost/api', timeoutMs: 1000 });
-  httpClient.defaults.headers.common.Authorization = 'Bearer ' + issueMockSession().accessToken;
-  const useCases = createProjectUseCases(
-    createHttpProjectRepository(createHttpProjectService(httpClient)),
-  );
   render(
-    <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <ProjectsProvider useCases={useCases}>
+    <I18nextProvider i18n={runtime.i18n}>
+      <Provider store={runtime.store}>
+        <QueryClientProvider client={runtime.queryClient}>
           <RouterProvider
             router={createMemoryRouter([
               {
@@ -47,8 +43,8 @@ async function renderFlow() {
               },
             ])}
           />
-        </ProjectsProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </Provider>
     </I18nextProvider>,
   );
   return userEvent.setup();

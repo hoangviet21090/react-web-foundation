@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createProjectUseCases } from '@/features/projects/application/project-use-cases';
-import { createHttpProjectRepository } from '@/features/projects/infrastructure/repositories/http-project-repository';
-import { createHttpProjectService } from '@/features/projects/infrastructure/services/http-project-service';
-import { createHttpClient } from '@/shared/infrastructure/http/http-client';
+import { createProjectUseCases } from '@/usecases/project-usecases';
+import { createProjectService } from '@/services/project-service';
+import { createHttpClient } from '@/config/http/http-client';
 import { issueMockSession } from '@/mocks/auth-handlers';
-import { validateUpdateProject, validateProjectVersion } from '@/features/projects/domain/project';
-import type { ProjectRepository } from '@/features/projects/application/ports/project-repository';
+import { validateUpdateProject, validateProjectVersion } from '@/entities/project';
+import type { ProjectService } from '@/usecases/project-usecases';
 function api(account: 'demo' | 'viewer' = 'demo') {
   const http = createHttpClient({ baseURL: 'http://localhost/api', timeoutMs: 1000 });
   http.defaults.headers.common.Authorization = 'Bearer ' + issueMockSession(account).accessToken;
-  return createProjectUseCases(createHttpProjectRepository(createHttpProjectService(http)));
+  return createProjectUseCases(createProjectService(http));
 }
 describe('Project CRUD contract and concurrency', () => {
   it('creates, loads, updates and deletes through validated HTTP adapters', async () => {
@@ -61,21 +60,21 @@ describe('Project CRUD contract and concurrency', () => {
     expect((await projects.get(current.id)).version).toBe(2);
   });
   it('rejects invalid IDs and versions before persistence', () => {
-    const repository: ProjectRepository = {
+    const service: ProjectService = {
       list: vi.fn(),
       get: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       remove: vi.fn(),
     };
-    const projects = createProjectUseCases(repository);
+    const projects = createProjectUseCases(service);
     expect(() => projects.get('')).toThrow();
     expect(() => projects.remove('demo', 0)).toThrow();
     expect(() =>
       projects.update('demo', { name: 'Valid', budget: 3, status: 'active', version: 0 }),
     ).toThrow();
-    expect(repository.remove).not.toHaveBeenCalled();
-    expect(repository.update).not.toHaveBeenCalled();
+    expect(service.remove).not.toHaveBeenCalled();
+    expect(service.update).not.toHaveBeenCalled();
     for (const version of [-1, 0, 1.5, NaN, Infinity])
       expect(() => validateProjectVersion(version)).toThrow();
     expect(() =>

@@ -1,11 +1,11 @@
+import { PROJECT_STATUSES } from '@/enums/project-status';
 import { http, HttpResponse, delay } from 'msw';
 import { z } from 'zod';
-import type { Project } from '@/features/projects/domain/project';
-import { success, failure } from './response';
-export { success, failure } from './response';
-import { mockUrl } from './api-url';
-import { authHandlers, authorizeMock } from './auth-handlers';
-import { createProjectFixtures } from './fixtures';
+import type { Project } from '@/entities/project';
+import { success, failure } from '@/mocks/response';
+import { mockUrl } from '@/mocks/api-url';
+import { authHandlers, authorizeMock } from '@/mocks/auth-handlers';
+import { createProjectFixtures } from '@/mocks/fixtures';
 
 let projects = createProjectFixtures();
 let sequence = projects.length;
@@ -18,7 +18,7 @@ const bodySchema = z.object({
   name: z.string().trim().min(2).max(100),
   budget: z.number().int().positive().max(1_000_000_000),
 });
-const updateSchema = bodySchema.extend({ status: z.enum(['draft', 'active', 'archived']) });
+const updateSchema = bodySchema.extend({ status: z.enum(PROJECT_STATUSES) });
 const querySchema = z.object({
   page: z.coerce.number().int().min(1),
   pageSize: z.coerce.number().int().min(1).max(100),

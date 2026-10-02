@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import viLocale from '@/shared/infrastructure/i18n/locales/vi.json';
-import enLocale from '@/shared/infrastructure/i18n/locales/en.json';
+import viLocale from '@/locales/vi.json';
+import enLocale from '@/locales/en.json';
 
 function textResources(resource: unknown, path = ''): Map<string, string> {
   if (typeof resource === 'string') return new Map([[path, resource]]);
