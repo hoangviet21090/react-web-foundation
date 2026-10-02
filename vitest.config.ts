@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
+
 export default defineConfig({
   plugins: [react()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
@@ -14,10 +15,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: [
-        'src/features/{projects,auth}/{domain,application,infrastructure}/**/*.ts',
-        'src/shared/infrastructure/http/**/*.ts',
-        'src/shared/infrastructure/cancellation.ts',
-        'src/shared/{domain,application}/**/*.ts',
+        'src/entities/**/*.ts',
+        'src/usecases/**/*.ts',
+        'src/services/**/*.ts',
+        'src/config/http/**/*.ts',
+        'src/store/**/*.ts',
       ],
       exclude: ['**/*.test.*'],
       reporter: ['text', 'lcov', 'html'],

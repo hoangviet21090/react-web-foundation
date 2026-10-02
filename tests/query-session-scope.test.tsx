@@ -1,14 +1,15 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
-import { createQueryClient } from '@/shared/infrastructure/query-client';
-import { OperationCancelledError } from '@/shared/application/cancellation';
-import { ProjectsProvider } from '@/features/projects/presentation/providers/projects-provider';
-import { useUpdateProject } from '@/features/projects/presentation/hooks/use-update-project';
-import type { ProjectUseCases } from '@/features/projects/application/project-use-cases';
-import type { Project } from '@/features/projects/domain/project';
-import { projectKeys } from '@/features/projects/presentation/queries/project-keys';
+import { createAppRuntime } from '@/config/runtime';
+import { OperationCancelledError } from '@/usecases/app-error';
+import { projectKeys, useUpdateProject } from '@/hooks/use-projects';
+import type { Project } from '@/entities/project';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const project: Project = {
   id: 'project-1',
@@ -31,20 +32,14 @@ describe('Mutation callbacks and session cache lifecycle', () => {
   it.each([false, true])(
     'only writes response data when the original cache scope is current (clear=%s)',
     async (clear) => {
-      const client = createQueryClient();
+      vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+      const runtime = await createAppRuntime();
+      const client = runtime.queryClient;
       const cancellation = deferred();
       const cancel = vi.spyOn(client, 'cancelQueries').mockReturnValueOnce(cancellation.promise);
-      const useCases: ProjectUseCases = {
-        list: vi.fn(),
-        get: vi.fn(),
-        create: vi.fn(),
-        remove: vi.fn(),
-        update: vi.fn().mockResolvedValue(project),
-      };
+      vi.spyOn(runtime.projects, 'update').mockResolvedValue(project);
       const wrapper = ({ children }: PropsWithChildren) => (
-        <QueryClientProvider client={client}>
-          <ProjectsProvider useCases={useCases}>{children}</ProjectsProvider>
-        </QueryClientProvider>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
       );
       const { result } = renderHook(() => useUpdateProject(project.id), { wrapper });
       let request!: Promise<Project>;

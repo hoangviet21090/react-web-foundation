@@ -1,4 +1,4 @@
-import type { ApiResponse } from '@/shared/infrastructure/http/response';
+import type { ApiResponse } from '@/usecases/response';
 export function success<T>(result: T): ApiResponse<T> {
   return { success: true, result, errorCode: null, errorDetails: null, message: null };
 }

@@ -4,5 +4,5 @@ export default {
   trailingComma: 'all',
   printWidth: 100,
   plugins: ['prettier-plugin-tailwindcss'],
-  tailwindStylesheet: './src/app/styles.css',
+  tailwindStylesheet: './src/styles.css',
 };

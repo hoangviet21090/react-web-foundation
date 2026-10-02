@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseEnv } from '@/shared/infrastructure/config/env-schema';
-import { createI18n } from '@/shared/infrastructure/i18n/i18n';
-import viLocale from '@/shared/infrastructure/i18n/locales/vi.json';
-import enLocale from '@/shared/infrastructure/i18n/locales/en.json';
+import { parseEnv } from '@/config/env-schema';
+import { createI18n } from '@/config/i18n';
+import viLocale from '@/locales/vi.json';
+import enLocale from '@/locales/en.json';
 
 describe('Public environment boundaries', () => {
   it.each([

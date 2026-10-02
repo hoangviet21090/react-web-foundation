@@ -1,38 +1,27 @@
-# Phát triển trên web foundation
+# Quy trình phát triển
 
-## Bắt đầu
-
-Bắt đầu từ [onboarding](docs/getting-started.md) và [cấu hình thư viện](docs/library-configuration.md). Đọc [structure](docs/project-structure.md), [architecture](docs/architecture.md), [naming](docs/naming.md) và [capabilities](docs/capabilities.md). Xác nhận requirements/base branch của repository đang làm; không kế thừa workflow của một repo khác.
+Đọc [README.md](README.md) để biết vị trí code và cách chạy. Chọn base branch theo team; giữ thay đổi có sẵn của người khác.
 
 ```sh
 git status --short
 git fetch origin
-git switch -c feat/project-search origin/<confirmed-base>
+git switch -c feat/project-search origin/main
 npm ci
 ```
 
-Repository đã có remote GitHub. Khi clone/adopt sang repo mới, kiểm tra git remote -v và base branch đã thống nhất trước khi tạo branch; không suy ra base từ tên example branch.
+## Quy ước code
 
-## Git conventions
+- Folder/file dùng kebab-case: `project-form.tsx`, `use-projects.ts`. Component/type dùng PascalCase; function/variable/schema/query-key factory dùng camelCase. Hằng số dùng chung và registry như APP_ROUTES dùng UPPER_SNAKE_CASE; object cấu hình từ env như featureFlags dùng camelCase.
+- Named exports, `import type` cho type. Props đơn giản đặt cùng component; model đặt ở entities, type dành riêng UI ở types hoặc cạnh consumer.
+- Kiểu và helper đặt theo owner: session/kết quả/lỗi ứng dụng ở usecases; URL/redirect ở routes; persistence riêng của preferences ở store/preferences. Schema form dùng `<name>-form-schema.ts`; schema wire tách riêng dùng `<name>-response-schema.ts` trong services.
+- `schemas/` dành cho form. Schema storage/state, env, HTTP và mock đặt cạnh module đọc dữ liệu; schema nhỏ chỉ dùng trong một file có thể private tại đó. Type client state/form có thể suy ra từ schema bằng `z.infer`; kiểu nghiệp vụ và contract trong entities/usecases giữ TypeScript thuần.
+- Pages/components chỉ làm UI. Business rule ở entities/usecases; API và schema response ở services. Không import concrete service vào usecase; truyền capability từ runtime để test độc lập.
+- TanStack Query cho server cache; Redux cho session/client workflow; RHF cho form; URL cho filter/page có thể chia sẻ. Không lưu access/refresh token vào Redux hoặc localStorage.
+- URL tập trung ở constants/routes, API endpoints ở constants/endpoints. Không copy chuỗi route ở nhiều nơi.
+- Dùng component có sẵn ở components/ui, semantic tokens và locale keys. Form có label/error/pending state; request có loading/empty/error/retry phù hợp.
+- Không thêm wrapper, interface, folder hay package chỉ để dự phòng. Tách khi có trách nhiệm hoặc consumer rõ ràng; giữ luồng gọi dễ lần theo.
 
-Branch dùng `feat/<description>`, `fix/<description>`, `chore/<description>`; có thể thêm issue ID nếu team muốn. Commit theo [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `feat(projects): add search`, `fix(auth): prevent stale responses`, `feat(api)!: change response contract`. Types: feat/fix/docs/style/refactor/perf/test/build/ci/chore/revert. Không bắt buộc mã US/sprint hoặc tên tổ chức.
-
-Không stage/commit unrelated changes, secrets, local env, reports hoặc agent files. Dùng explicit paths. AGENTS.md/AGENTS.override.md là machine-local, exclude bằng .git/info/exclude. Không rewrite pushed history/merge/publish/deploy khi chưa được yêu cầu.
-
-## Code conventions
-
-- Feature/layer ownership trước, naming sau. Named exports và import type.
-- Domain/application thuần TS; port tại layer consumer; app inject concrete adapters.
-- Wire/form types suy từ schema; UI view types tách khỏi core/DTO.
-- Query cho server cache, Redux cho client workflow, RHF cho form, URL cho filters/page.
-- Route constants/builders ở app; endpoint HTTP ở feature infrastructure.
-- UI primitives shared/ui; business UI tại feature; common composed UI/hooks/types tại shared presentation groups.
-- Strings qua locale, màu qua semantic tokens. Form có label/error association/pending/dirty behavior.
-- Timestamp backend UTC; format theo timezone cấu hình. Currency/budget rules của domain được nêu rõ.
-- Không log credentials, payload hoặc raw HTTP errors. Reporter chỉ nhận dữ liệu đã lọc tại boundary.
-- Dependency mới phải giải thích consumer, license, bundle/browser impact và test trong PR.
-
-## Gates
+## Test và kiểm tra
 
 ```sh
 npm run format
@@ -40,19 +29,18 @@ npm run check
 npm run test:e2e
 npm run test:e2e:production
 git diff --check
-git status --short
 ```
 
-Chạy các suites tuần tự để tránh tranh tài nguyên. Hooks: pre-commit lint-staged + architecture, commit-msg commitlint, pre-push full check. CI chạy lại để không phụ thuộc hooks trên máy dev.
+Vitest/Testing Library kiểm tra business rule, API contract, auth races và UI. MSW dùng cùng response contract với service. Playwright kiểm tra browser, desktop/mobile width và accessibility. Khi thay API, cập nhật service/schema/mock/test cùng lúc; giữ input khi request lỗi hoặc version conflict.
 
-Không nới threshold hoặc disable rule để che lỗi. Tests tập trung invariants/contracts/races/user behavior. PR mô tả vấn đề, kết quả, validation và giới hạn còn lại.
+Pre-commit chạy lint-staged; commit-msg chạy commitlint; pre-push chạy typecheck và unit tests. CI chạy lại checks và browser tests. Test mới tập trung vào hành vi hoặc rủi ro thực tế, không mô phỏng lại implementation hay ép folder structure.
 
-## Tạo source
+## Git và review
 
-`npm run feature:new -- <name> --dry-run` xem output trước; bỏ --dry-run để tạo. Tích hợp theo README sinh ra và [recipe](docs/adding-a-feature.md).
+Branch: `feat/<description>`, `fix/<description>`, `refactor/<description>`, `chore/<description>`. Commit theo Conventional Commits: `feat(projects): add search`, `fix(auth): prevent stale refresh`. PR nêu vấn đề, kết quả và kiểm tra đã chạy.
 
-`npm run ui:add -- dialog` dùng CLI shadcn đã pin. Wrapper chuẩn hóa cn imports. Review generated source/dependencies, accessibility, tokens trước khi dùng; không overwrite primitive tùy biến thiếu review.
+Stage path cụ thể, không đưa secrets, local env, report hoặc thay đổi ngoài scope vào commit. AGENTS.md/AGENTS.override.md là hướng dẫn riêng máy, exclude bằng .git/info/exclude. Không force-push, publish/deploy hoặc merge khi chưa được yêu cầu.
 
-## Adopt cho team
+Trước review: code đúng owner; mock/contract khớp; chức năng cũ còn chạy; vi/en, light/dark, keyboard và route bảo vệ được kiểm tra khi có ảnh hưởng. Dependency mới cần consumer rõ ràng; không upgrade dependency ngoài phạm vi task.
 
-Đổi branding/storage namespace/package metadata, backend contracts và example feature. Chọn Git host/base, reviewer ownership, branch protection, required CI và release approvals. Templates local không tự thiết lập các settings trên remote.
+Khi adopt base: đổi branding/package/storage namespace, thay backend contract và ví dụ Projects, cấu hình env/hosting, thống nhất base branch và CI/release của team. Báo lỗi bảo mật qua kênh riêng do team chỉ định, không đăng public dữ liệu người dùng hoặc secret.

@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { AppError } from '@/shared/application/app-error';
-import { OperationCancelledError } from '@/shared/application/cancellation';
-import { createErrorReporter } from '@/shared/infrastructure/observability/error-reporter';
-import { observeBrowserErrors } from '@/app/observability/browser-errors';
-import { useOnline } from '@/shared/hooks/use-online';
-import { requireOnline } from '@/shared/lib/require-online';
-import { parseEnv } from '@/shared/infrastructure/config/env-schema';
-import { formatMoney } from '@/shared/lib/format-money';
-import { formatDateTime } from '@/shared/lib/format-date-time';
+import { AppError } from '@/usecases/app-error';
+import { OperationCancelledError } from '@/usecases/app-error';
+import { createErrorReporter } from '@/utils/error-reporter';
+import { observeBrowserErrors } from '@/utils/error-reporter';
+import { useOnline } from '@/hooks/use-online';
+import { requireOnline } from '@/utils/require-online';
+import { parseEnv } from '@/config/env-schema';
+import { formatMoney } from '@/utils/format-money';
+import { formatDateTime } from '@/utils/format-date-time';
 
 describe('Reusable browser foundation', () => {
   it('keeps only bounded allowlisted diagnostics, isolating an unavailable sink', () => {

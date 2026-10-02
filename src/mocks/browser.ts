@@ -1,5 +1,5 @@
 import { setupWorker } from 'msw/browser';
-import { handlers, mockApiUrl } from './handlers';
+import { handlers, mockApiUrl } from '@/mocks/handlers';
 export async function startMocks() {
   const worker = setupWorker(...handlers);
   await worker.start({

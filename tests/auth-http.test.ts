@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from 'vitest';
 import axios from 'axios';
 import { http, HttpResponse } from 'msw';
 import { server } from './server';
-import { createHttpClient } from '@/shared/infrastructure/http/http-client';
-import { waitWithSignal } from '@/shared/infrastructure/http/wait-with-signal';
-import { createAuthSession } from '@/features/auth/application/auth-session';
-import { createHttpAuthService } from '@/features/auth/infrastructure/services/http-auth-service';
-import { createHttpAuthRepository } from '@/features/auth/infrastructure/repositories/http-auth-repository';
-import { createHttpProjectRepository } from '@/features/projects/infrastructure/repositories/http-project-repository';
-import { createHttpProjectService } from '@/features/projects/infrastructure/services/http-project-service';
+import { createHttpClient } from '@/config/http/http-client';
+import { waitWithSignal } from '@/config/http/wait-with-signal';
+import { createAuthSession } from '@/usecases/auth-session';
+import { createAuthService } from '@/services/auth-service';
+
+import { createProjectService } from '@/services/project-service';
+import { createProjectUseCases } from '@/usecases/project-usecases';
 import { issueMockSession } from '@/mocks/auth-handlers';
 import { mockUrl } from '@/mocks/api-url';
 import { success, failure } from '@/mocks/response';
@@ -27,8 +27,8 @@ function deferred<T>() {
 }
 async function setup() {
   const clear = vi.fn();
-  const service = createHttpAuthService(createHttpClient(options));
-  const session = createAuthSession(createHttpAuthRepository(service), clear);
+  const service = createAuthService(createHttpClient(options));
+  const session = createAuthSession(service, clear);
   await session.login(login);
   const client = createHttpClient({ ...options, auth: session });
   return { session, client, clear, service };
@@ -44,13 +44,12 @@ describe('Authenticated HTTP and MSW contract', () => {
     });
     expect(session.getSnapshot().status).toBe('authenticated');
   });
-  it('login service retains the envelope, reload restores via refresh, logout clears the session', async () => {
-    const service = createHttpAuthService(createHttpClient(options));
+  it('login validates credentials, reload restores via refresh, logout clears the session', async () => {
+    const service = createAuthService(createHttpClient(options));
     expect(await service.login(login)).toMatchObject({
-      success: true,
-      result: { expiresInSeconds: 30 },
+      expiresInSeconds: 30,
     });
-    const restored = createAuthSession(createHttpAuthRepository(service), vi.fn());
+    const restored = createAuthSession(service, vi.fn());
     await restored.restore();
     expect(restored.getSnapshot().status).toBe('authenticated');
     await restored.logout();
@@ -66,7 +65,7 @@ describe('Authenticated HTTP and MSW contract', () => {
       }),
     );
     await expect(
-      createHttpAuthService(createHttpClient(options)).login({ ...login, password: 'wrong' }),
+      createAuthService(createHttpClient(options)).login({ ...login, password: 'wrong' }),
     ).rejects.toMatchObject({ kind: 'unauthorized' });
     expect(refreshes).toBe(0);
   });
@@ -282,9 +281,9 @@ describe('Authenticated HTTP and MSW contract', () => {
   it('a POST rejected before processing can replay once without creating two drafts', async () => {
     const { client } = await setup();
     server.use(http.post(mockUrl('/projects'), unauthorized, { once: true }));
-    const repository = createHttpProjectRepository(createHttpProjectService(client));
-    await repository.create({ name: 'Replay Demo', budget: 250 });
-    expect((await repository.list(params)).totalCount).toBe(7);
+    const useCases = createProjectUseCases(createProjectService(client));
+    await useCases.create({ name: 'Replay Demo', budget: 250 });
+    expect((await useCases.list(params)).totalCount).toBe(7);
   });
   it('rejects malformed token payloads and business envelopes', async () => {
     const { session } = await setup();

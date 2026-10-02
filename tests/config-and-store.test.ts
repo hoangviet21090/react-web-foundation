@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseEnv } from '@/shared/infrastructure/config/env-schema';
-import { createPreferencesStorage } from '@/app/preferences/preferences-storage';
-import { createAppStore } from '@/app/store/store';
-import { updatePreferences } from '@/app/preferences/preferences-thunks';
-import { createQueryClient } from '@/shared/infrastructure/query-client';
-import { AppError } from '@/shared/application/app-error';
-import viLocale from '@/shared/infrastructure/i18n/locales/vi.json';
-import enLocale from '@/shared/infrastructure/i18n/locales/en.json';
-import { formatDateTime } from '@/shared/lib/format-date-time';
+import { parseEnv } from '@/config/env-schema';
+import { createPreferencesStorage } from '@/store/preferences/preferences-storage';
+import { createAppStore } from '@/store/store';
+import { updatePreferences } from '@/store/preferences/preferences-thunks';
+import { createQueryClient } from '@/config/query-client';
+import { AppError } from '@/usecases/app-error';
+import viLocale from '@/locales/vi.json';
+import enLocale from '@/locales/en.json';
+import { formatDateTime } from '@/utils/format-date-time';
 
 describe('Configuration and client state', () => {
   it('rejects malformed configuration without echoing values', () => {
@@ -22,7 +22,8 @@ describe('Configuration and client state', () => {
     };
     const store = createAppStore({ language: 'vi', theme: 'light' }, dependencies);
     await store.dispatch(updatePreferences({ language: 'en', theme: 'dark' }));
-    expect(store.getState()).toEqual({ preferences: { language: 'en', theme: 'dark' } });
+    expect(store.getState().preferences).toEqual({ language: 'en', theme: 'dark' });
+    expect(store.getState()).not.toHaveProperty('projects');
     expect(dependencies.savePreferences).toHaveBeenCalledWith({ language: 'en', theme: 'dark' });
   });
   it('tolerates unavailable storage and malformed persisted values', () => {

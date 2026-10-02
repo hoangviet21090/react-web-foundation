@@ -1,9 +1,9 @@
 import { http, HttpResponse, delay } from 'msw';
 import { z } from 'zod';
-import type { AuthUser, Permission } from '@/features/auth/domain/auth';
-import type { AuthCredentials } from '@/features/auth/application/auth-credentials';
-import { success, failure } from './response';
-import { mockUrl } from './api-url';
+import type { AuthUser, Permission } from '@/entities/auth';
+import type { AuthCredentials } from '@/usecases/auth-session';
+import { success, failure } from '@/mocks/response';
+import { mockUrl } from '@/mocks/api-url';
 
 export const MOCK_ACCESS_TTL_SECONDS = 30;
 const MOCK_SESSION_COOKIE = 'foundation_mock_session';

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAuthSession } from '@/features/auth/application/auth-session';
-import type { AuthRepository } from '@/features/auth/application/ports/auth-repository';
-import type { AuthCredentials } from '@/features/auth/application/auth-credentials';
-import { hasPermission, validateLogin } from '@/features/auth/domain/auth';
-import { AppError } from '@/shared/application/app-error';
-import { safeReturnTo } from '@/app/routing/guards/return-to';
+import { createAuthSession } from '@/usecases/auth-session';
+import type { AuthService, AuthCredentials } from '@/usecases/auth-session';
+
+import { hasPermission, validateLogin } from '@/entities/auth';
+import { AppError } from '@/usecases/app-error';
+import { safeReturnTo } from '@/routes/return-to';
 
 const credentials: AuthCredentials = {
   accessToken: 'unit-test-token',
@@ -21,7 +21,7 @@ function deferred<T>() {
   });
   return { promise, resolve, reject };
 }
-function setup(overrides: Partial<AuthRepository> = {}) {
+function setup(overrides: Partial<AuthService> = {}) {
   const repository = {
     login: vi.fn().mockResolvedValue(credentials),
     refresh: vi.fn().mockResolvedValue(credentials),

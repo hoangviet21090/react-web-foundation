@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { onlineManager } from '@tanstack/react-query';
-import { createAppStore } from '@/app/store/store';
-import { updatePreferences } from '@/app/preferences/preferences-thunks';
-import { createQueryClient } from '@/shared/infrastructure/query-client';
-import { AppError } from '@/shared/application/app-error';
+import { createAppStore } from '@/store/store';
+import { updatePreferences } from '@/store/preferences/preferences-thunks';
+import { createQueryClient } from '@/config/query-client';
+import { AppError } from '@/usecases/app-error';
 
 function deferred() {
   let resolve!: () => void;

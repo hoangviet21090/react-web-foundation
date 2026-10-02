@@ -1,4 +1,4 @@
-import type { Project } from '@/features/projects/domain/project';
+import type { Project } from '@/entities/project';
 export function createProjectFixtures(): Project[] {
   return [
     {

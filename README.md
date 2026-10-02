@@ -1,97 +1,122 @@
 # react-web-foundation
 
-Base React web dùng chung, tổ chức theo **feature-first Clean Architecture**. Auth và Projects là hai vertical slices chạy được qua React → use cases → repository → HTTP → MSW. Không yêu cầu domain, thư viện UI hoặc quy trình Git của một tổ chức cụ thể.
+Base React web trong một repository, dùng Clean Architecture với các folder quen thuộc. UI, model, xử lý nghiệp vụ và API tách trách nhiệm; không cần đi qua nhiều lớp wrapper để thêm một màn hình.
 
-Thư mục vật lý và package hiện cùng tên `react-web-foundation`. Việc đổi tên thư mục không làm thay đổi imports hoặc cấu hình build.
+## Chạy dự án
 
-## Chạy ngay
-
-Node 24.18.1, npm 11.x (lock được tạo bằng 11.16.0).
+Node 24.18.1, npm 11.x.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Mở http://127.0.0.1:5173. Tài khoản mock: `demo@example.test / Demo123!` có quyền đọc/tạo/sửa/xóa; `viewer@example.test / Demo123!` chỉ đọc. Không dùng dữ liệu thật trong demo. Mock reset dữ liệu khi reload; cookie marker demo không phải refresh token thật.
+Mở http://127.0.0.1:5173. Tài khoản mock: `demo@example.test / Demo123!` có quyền CRUD; `viewer@example.test / Demo123!` chỉ đọc. Dữ liệu mock reset khi reload.
 
-## Những luồng đã có
+| Lệnh                          | Mục đích                                                               |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `npm run dev`                 | Chạy với MSW mock                                                      |
+| `npm run dev:api`             | Chạy với backend theo env                                              |
+| `npm run check`               | Format, lint, coverage, typecheck, production build và kiểm tra bundle |
+| `npm run test:e2e`            | Luồng auth/CRUD trên desktop và mobile Chromium                        |
+| `npm run test:e2e:production` | Build và smoke test production                                         |
+| `npm run build`               | Tạo production `dist/`                                                 |
+| `npm run build:demo`          | Tạo bản demo có MSW                                                    |
+| `npm run ui:add -- dialog`    | Thêm component bằng shadcn CLI đã pin                                  |
 
-- Login/restore/refresh/logout, memory access token, route/permission guards, single-flight refresh, xử lý race và cleanup cache.
-- Projects: list/search/pagination trong URL, detail/create/edit/delete, lazy routes, request cancellation, pending/empty/error/retry states.
-- Version concurrency: PUT/DELETE gửi If-Match; response 412 giữ input và yêu cầu xem bản mới nhất.
-- Form RHF/Zod, domain validation độc lập, chặn submit lặp, cảnh báo điều hướng và đóng/reload tab khi chưa lưu.
-- Shared offline hook/banner; writes không xếp hàng để tự gửi lúc có mạng trở lại.
-- Confirm dialog dựa trên Radix, notification provider, theme/language persistence, route title/scroll/focus.
-- Axios/error mapping, TanStack Query cache policy, Redux Toolkit/thunk cho client state.
-- Feature flags được validate; permission phía server vẫn là điều kiện bắt buộc.
-- Error reporting port + adapter có giới hạn dữ liệu, nối React/router/Query/browser errors; chưa gửi tới nhà cung cấp bên ngoài.
-- Generator feature, architecture/core/naming/scaffolding gates, formatting/lint/Git hooks, unit/contract/browser tests.
-- Env validation tại build/runtime, bundle checks, GitHub/Azure CI, Nginx static-host template.
+Cài browser lần đầu: `npx playwright install chromium`. Trên PowerShell có thể dùng `npm.cmd` nếu `npm.ps1` bị chặn.
 
-Xem [ma trận khả năng và giới hạn](docs/capabilities.md). Base cung cấp các tình huống nền tảng; backend, SSO, upload, tenant isolation, realtime/offline sync cần contract sản phẩm trước khi triển khai.
-
-## Cấu trúc chính
+## Nơi đặt code
 
 ```text
 src/
-  app/                 # Compose dependencies, routes/layouts, preferences, config, observability
-  features/
-    auth/              # Identity/session example
-    projects/          # Full CRUD example, version conflicts
-      domain/
-      application/ports/
-      infrastructure/  # dto, services, mappers, repositories
-      presentation/    # pages, components, hooks, contexts, providers, queries, schemas, types, constants, utils
-  shared/
-    domain/
-    application/ports/
-    infrastructure/    # config, http, i18n, observability, cache
-    ui/                # DOM primitives
-    components/        # Confirm, offline, request error, unsaved changes
-    hooks/
-    contexts/
-    providers/
-    types/             # Shared presentation types only
-    lib/
-  mocks/
-tests/
-e2e/
-scripts/
-docs/adr/
-deployment/
+  app.tsx             # Khởi tạo ứng dụng và ghép providers/router
+  components/         # Component dùng chung hoặc theo nghiệp vụ
+    ui/               # shadcn/Radix primitives
+    auth/
+    projects/
+  pages/              # UI chính của từng màn hình
+  layouts/            # Shell, navigation và layout route
+  routes/             # Router, bảo vệ route, loading và navigation
+  entities/           # Model và quy tắc nghiệp vụ thuần TS
+  usecases/           # Điều phối hành động, contract và kết quả ứng dụng
+  services/           # Gọi HTTP và validate dữ liệu backend
+  schemas/            # Validate form và kiểu dữ liệu form (RHF/Zod)
+  hooks/              # React hooks; Query cho server state
+  store/              # Redux client state: slice, selector, thunk
+    auth/
+    preferences/
+  config/             # Env, Axios, Query, i18n, feature flags và runtime
+  constants/          # Route registry, API endpoints, giá trị cố định
+  enums/              # Tập giá trị nghiệp vụ, ví dụ PROJECT_STATUSES
+  utils/              # Hàm dùng chung, format và browser utilities
+  types/              # Kiểu hỗ trợ UI và declarations
+  locales/            # vi/en
+  contexts/           # Context có state dùng chung thực tế
+  providers/          # Ghép thư viện và notification state
+  mocks/              # MSW handlers và dữ liệu mẫu
+  styles.css          # Tailwind v4, semantic tokens, light/dark
 ```
 
-Giữ nhóm folder có trách nhiệm rõ dù ít file để dev có mẫu mở rộng. Không gom type/use case/service mọi feature vào shared.
+`tests/` kiểm tra hành vi; `e2e/` kiểm tra browser; `deployment/nginx.conf` là mẫu static hosting.
 
-**Dev mới bắt đầu:** [onboarding](docs/getting-started.md) và [cấu hình thư viện](docs/library-configuration.md).
+Dependency rule: `entities` không biết React, Redux hoặc Axios. `usecases` dùng entity và service contract thuần TypeScript; concrete service được cấp trong `config/runtime.ts` khi `createAppRuntime` khởi tạo ứng dụng. `AuthState`, `AuthCredentials`, lỗi ứng dụng và pagination thuộc `usecases`; `ApiResponse` nằm cùng `requireResult` trong `usecases/response.ts`. `services` biết HTTP và model nhưng không biết UI. UI gọi use case qua hook hoặc Redux thunk. ESLint bảo vệ hai lớp bên trong; không có generator hoặc folder checker bắt buộc.
 
-**Đọc trước khi code:** [nơi đặt code](docs/project-structure.md) → [kiến trúc](docs/architecture.md) → [naming](docs/naming.md) → [thêm feature](docs/adding-a-feature.md) → [quy trình](CONTRIBUTING.md).
+Schema đặt theo nguồn dữ liệu và module sở hữu việc kiểm tra. Folder `schemas/` hiện dành cho form; các schema khác đặt cạnh nơi đọc dữ liệu:
 
-## Lệnh
+| Dữ liệu cần kiểm tra                     | Vị trí               | Ví dụ                                                                 |
+| ---------------------------------------- | -------------------- | --------------------------------------------------------------------- |
+| Input form RHF                           | `schemas/`           | `login-form-schema.ts`, `project-form-schema.ts`                      |
+| State preferences lưu trong localStorage | `store/preferences/` | `preferences-schema.ts`, dùng trong `preferences-storage.ts`          |
+| Payload backend                          | `services/`          | `project-response-schema.ts`; schema nhỏ có thể private trong service |
+| Env và envelope HTTP chung               | `config/`            | `env-schema.ts`, `http/response.ts`                                   |
+| Request của backend mock                 | `mocks/`             | Schema private trong handler                                          |
 
-| Lệnh                                       | Công việc                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `npm run dev`                              | Local MSW                                                                                   |
-| `npm run dev:api`                          | Backend thật theo env                                                                       |
-| `npm run feature:new -- catalog --dry-run` | Xem danh sách file sẽ sinh                                                                  |
-| `npm run feature:new -- catalog`           | Sinh read-only vertical slice; không ghi đè module                                          |
-| `npm run ui:add -- dialog`                 | CLI shadcn đã pin; review generated code                                                    |
-| `npm run check`                            | Format/lint/naming/architecture/core/tooling/scaffolding/config/types/coverage/build/bundle |
-| `npm run test:e2e`                         | Auth, CRUD, accessibility, URL, offline, unsaved form trên browser                          |
-| `npm run test:e2e:production`              | Build production + smoke không có MSW trong app                                             |
-| `npm run build`                            | Release dist                                                                                |
-| `npm run build:demo`                       | Demo có MSW, không dùng làm production                                                      |
-| `npm run format`                           | Format code và Tailwind classes                                                             |
+`Preferences` được suy ra bằng `z.infer` từ schema vì đây là client state của module preferences; các consumer dùng `import type`. Quy tắc nghiệp vụ trong `entities` vẫn là TypeScript thuần. Một trường xuất hiện ở form, response và business rule có thể cần kiểm tra ở cả ba nơi vì mỗi nơi nhận dữ liệu từ một ranh giới khác nhau.
 
-Cài Chromium lần đầu: `npx playwright install chromium`. PowerShell chặn npm.ps1 thì dùng npm.cmd.
+Chỉ tạo folder con khi có code cần tổ chức. Không cần namespace hay enum để bọc mọi type; dùng interface/type và union khi phù hợp. Route guard là component của router. HOC chỉ thêm khi có nhu cầu dùng chung cụ thể.
 
-## Khi dùng làm base dự án mới
+Tham khảo: [Clean Architecture — Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html), [bài Clean Architecture trên Viblo](https://viblo.asia/p/clean-architecture-Ljy5VMYzlra).
 
-1. Đổi package name/branding/storage namespace; cài bằng lockfile.
-2. Chọn backend contract; thay adapter và mock cùng lúc. [API mẫu](docs/api-contract.md) không phải API bắt buộc cho mọi dự án.
-3. Thay Projects bằng domain của sản phẩm hoặc dùng generator để thêm module mới.
-4. Cấu hình env, identity, permissions và [deployment](docs/deployment.md).
-5. Chạy gates; thiết lập remote, branch protection, CI và quy trình release của team.
+## Thêm một màn hình
 
-Source đã được push lên [hoangviet21090/react-web-foundation](https://github.com/hoangviet21090/react-web-foundation). Môi trường production và release pipeline cần được team cấu hình khi adopt.
+1. Tạo UI chính ở `pages/`, tách phần tái sử dụng vào `components/`.
+2. Khai báo model/quy tắc ở `entities/`; tạo fixtures và handler trong `mocks/`.
+3. Viết `services/<name>-service.ts` gọi API và validate response.
+4. Viết `usecases/<name>-usecases.ts` để validate input, format hoặc xử lý dữ liệu; nhận service qua tham số.
+5. Thêm hook TanStack Query cho server data. Với client workflow, thêm slice/selector/thunk trong `store/<name>/`.
+6. Khai báo URL ở `constants/routes.ts`, endpoint ở `constants/endpoints.ts`, nối page vào `routes/router.tsx` và thêm test cho hành vi mới.
+
+Projects là ví dụ list/search/pagination/detail/create/edit/delete. Auth và Preferences minh họa Redux Toolkit và thunk. Không sao chép server data sang Redux khi TanStack Query đã quản lý.
+
+## Config và API mẫu
+
+Copy `.env.example` sang `.env.local` để override local. Các giá trị `VITE_*` được đưa vào bundle, không chứa secret. `dev:api` không tự tạo proxy; `/api` cần gateway hoặc cấu hình `VITE_API_BASE_URL` tới backend phù hợp.
+
+| Config                       | Giá trị mặc định           |
+| ---------------------------- | -------------------------- |
+| `VITE_APP_NAME`              | Web Foundation             |
+| `VITE_API_BASE_URL`          | /api                       |
+| `VITE_API_TIMEOUT_MS`        | 15000                      |
+| `VITE_ENABLE_MOCKS`          | false; chỉ bật ở mock/demo |
+| `VITE_DEFAULT_LOCALE`        | vi                         |
+| `VITE_TIME_ZONE`             | UTC                        |
+| `VITE_ENABLE_PROJECT_DELETE` | true; chỉ điều khiển UI    |
+
+Axios dùng credentials, XSRF cookie/header và bearer token cho BFF đã cấu hình. TanStack Query giữ dữ liệu fresh 60 giây, thu hồi cache không dùng sau 5 phút; retry tối đa hai lần cho lỗi đọc tạm thời, không tự retry/queue write. Redux Toolkit bật middleware thunk mặc định; token không nằm trong store. RHF/Zod quản lý form, service schema kiểm tra wire response, entity kiểm tra business rule.
+
+Tailwind v4 dùng Vite plugin và `styles.css`; shadcn dùng CSS variables/semantic tokens, `components/ui` và `utils/cn`. i18next có vi/en; dayjs format UTC theo timezone env. Query/Redux devtools chỉ bật khi development.
+
+API ví dụ: `POST /auth/login|refresh|logout`; `GET/POST /projects`; `GET/PUT/DELETE /projects/:id`. Response theo `ApiResponse<T>`: `success`, `result`, `errorCode`, `errorDetails`, `message`. Danh sách có `items`, `totalCount`, `page`, `pageSize`. PUT/DELETE dùng `If-Match` để phát hiện version conflict. Khi dùng backend khác, sửa service/schema/mock cùng lúc; UI không nhận raw Axios response. Wire contract mẫu: [openapi.yaml](openapi.yaml).
+
+## Auth và production
+
+Access token chỉ giữ trong memory. Backend thực tế phải cấp refresh token qua HttpOnly/Secure cookie và cấu hình Path/CORS/CSRF/SameSite phù hợp. 401 refresh single-flight, replay tối đa một lần; logout/đổi session xóa Query cache. Route/permission guard chỉ điều khiển giao diện; backend phải kiểm tra quyền và resource ownership. Replay write sau 401 yêu cầu backend từ chối trước khi thực hiện side effect.
+
+LocalStorage chỉ lưu theme/language; sessionStorage của router chỉ lưu vị trí cuộn. Tokens và server cache không được persist.
+
+Mock refresh dùng cookie marker không bí mật, không phải token thật. Không deploy mock/demo làm production. Production build kiểm tra HTTPS hoặc same-origin API và loại MSW/devtools/source maps. Backend/SSO, refresh rotation, phối hợp nhiều tab, upload và tenant isolation cần contract sản phẩm trước khi triển khai.
+
+GitHub CI và Azure pipeline chạy quality/browser checks. Mẫu Nginx cần cấu hình upstream/TLS/CSP thực tế; release pipeline và branch protection do team thiết lập. Không log credentials, payload hay raw HTTP errors; reporter hiện chỉ giữ source/kind/timestamp trong memory. Dependencies được pin/lock và CI audit; đây không phải chứng nhận bảo mật. Các thư viện giữ license riêng; source shadcn có notice trong `THIRD_PARTY_NOTICES`.
+
+Quy trình code và review: [CONTRIBUTING.md](CONTRIBUTING.md).
